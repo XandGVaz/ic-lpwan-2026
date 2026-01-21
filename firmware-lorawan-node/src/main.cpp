@@ -5,7 +5,7 @@
     This code reads temperature and humidity data from a DHT22 sensor and sends it via LoRaWAN using 
     the MCCI LoRaWAN LMIC library.
 */
- 
+
 /*============================================= Librarys =================================================*/ 
 
 // Arduino core library
@@ -44,6 +44,15 @@ const uint8_t PROGMEM APPKEY[16] = { 0x12, 0xAF, 0xED, 0xA9, 0x0A, 0x5F, 0xA0, 0
 #define UPLINK_INTERVAL 180000
 
 /*================================================ FreeRTOS variables ======================================*/
+
+/*
+Task                Core  Prio  Description
+-------------------------------------------------------------------------------
+vNetworkEventsTask    1     1    Manage LoRaWAN events and joining
+vUplinkTask           1     2    Send uplink packets periodically
+vDhtTask              0     1    Read DHT sensor data and send to uplink task
+-------------------------------------------------------------------------------
+*/
 
 // Tasks handles
 TaskHandle_t xNetworkEventstaks = NULL;

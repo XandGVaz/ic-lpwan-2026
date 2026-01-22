@@ -6,18 +6,14 @@ void Display::setCommunicationPins(uint8_t sda, uint8_t scl) {
 }
 
 bool Display::configure(){
-    // Initialize the OLED display
     if(! _wire->begin(_sda, _scl)){
         return false;
     }
     if(! _oled->begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)){
         return false;
     }
-    // Show initial display buffer contents on the screen --
     _oled->display();
     vTaskDelay(2000);
-
-    // Clear the buffer and sucessfully initialized
     _oled->clearDisplay();
     return true;
 }
@@ -42,4 +38,12 @@ void Display::println(const String &text, uint8_t size){
     _oled->setTextColor(SSD1306_WHITE);
     _oled->println(text);
     _oled->display();
+}
+
+int16_t Display::width(){
+    return _oled->width();
+}
+
+int16_t Display::height(){
+    return _oled->height();
 }

@@ -7,12 +7,12 @@
 #include <Adafruit_SSD1306.h>
 
 // Oled dimensions
-#define SCREEN_WIDTH   128  // OLED display width, in pixels
-#define SCREEN_HEIGHT  64   // OLED display height, in pixels
+#define SCREEN_WIDTH   128  
+#define SCREEN_HEIGHT  64   
 
 // I2C address and pins
-#define SCREEN_ADDRESS 0x3C // 0x3D for 128x64, 0x3C for 128x32
-#define OLED_RESET     16   // Reset pi
+#define SCREEN_ADDRESS 0x3C 
+#define OLED_RESET     16   
 
 
 class Display{
@@ -20,10 +20,6 @@ class Display{
     Adafruit_SSD1306* _oled;
     uint8_t _sda;
     uint8_t _scl;
-
-    // uint8_t _width;
-    // uint8_t _height;
-    // uint8_t _address;
 public:
     Display(TwoWire* Wire = &Wire): _wire(Wire) {
         _oled = new Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, _wire, OLED_RESET);
@@ -34,6 +30,8 @@ public:
     void setCursor(int16_t x, int16_t y);
     void print(const String &text, uint8_t size);
     void println(const String &text, uint8_t size);
+    int16_t width();
+    int16_t height();
 };
 
 

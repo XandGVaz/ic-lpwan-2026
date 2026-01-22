@@ -17,6 +17,9 @@
 // DHT sensor library
 #include "dht.hpp"
 
+// Display library
+#include "display.hpp"
+
 // FreeRTOS API library
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -34,9 +37,13 @@
 #define LORA_SCK  5
 #define LORA_SS   18
 
+// I2C address and pins
+#define OLED_SDA  4    
+#define OLED_SCL  15   
+
 // LoRa Keys
-const uint8_t PROGMEM APPEUI[8]={ 0x28, 0xE4, 0x61, 0xAA, 0xA4, 0xF6, 0xEC, 0xF1 };
-const uint8_t PROGMEM DEVEUI[8]={ 0x9D, 0x53, 0x07, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
+const uint8_t PROGMEM APPEUI[8] = { 0x28, 0xE4, 0x61, 0xAA, 0xA4, 0xF6, 0xEC, 0xF1 };
+const uint8_t PROGMEM DEVEUI[8] = { 0x9D, 0x53, 0x07, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
 const uint8_t PROGMEM APPKEY[16] = { 0x12, 0xAF, 0xED, 0xA9, 0x0A, 0x5F, 0xA0, 0x7B, 0xBE, 0x9E, 0x7A, 0xC4, 0x0C, 0x71, 0xDC, 0x95 };
 
 // Packet definitions 
@@ -84,6 +91,9 @@ LoRaWAN LoRaWANModule(&SPI);
 
 // DHT module
 Dht DHT(DHT_PIN);
+
+// Display module
+Display DisplayModule(&Wire);
 
 /*============================================== Arduino setup and loop ==========================================*/
 
@@ -235,8 +245,15 @@ void vUplinkTask(void* pvParameters){
 
 void vDhtTask(void* pvParameters){
     // DHT setup
-    if(!DHT.setup()){
+    if(!DHT.configure()){
         Serial.println("Setup dht sensor failed");
+        while(1);
+    }
+
+    // Display setup
+    DisplayModule.setCommunicationPins(OLED_SDA, OLED_SCL);
+    if(!DisplayModule.configure()){
+        Serial.println("Display setup failed");
         while(1);
     }
 
@@ -248,10 +265,18 @@ void vDhtTask(void* pvParameters){
         dhtQueueData.temperature = DHT.getTemperature();
         dhtQueueData.humidity = DHT.getHumidity();
 
+        // Update display
+        DisplayModule.clear();
+        DisplayModule.setCursor(0,0);
+        DisplayModule.println("Temp: ", 2);
+        DisplayModule.println(String(dhtQueueData.temperature) + " C", 2);
+        DisplayModule.println("Hum: ", 2);
+        DisplayModule.println(String(dhtQueueData.humidity) + " %", 2);
+
         // Send data to queue for uplink task
         xQueueSend(xDhtQueueHandle, &dhtQueueData, portMAX_DELAY);
 
         // Wait for next cycle
-        vTaskDelay(pdMS_TO_TICKS(UPLINK_INTERVAL)/3);
+        vTaskDelay(pdMS_TO_TICKS(UPLINK_INTERVAL)/30);
     }
 }

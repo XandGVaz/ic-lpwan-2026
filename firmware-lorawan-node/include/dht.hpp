@@ -20,7 +20,7 @@ class Dht{
   sensor_t* _sensor = NULL;
  public:
   Dht(uint8_t dhtPin);
-  bool setup();
+  bool configure();
   float getTemperature();
   float getHumidity();
 };

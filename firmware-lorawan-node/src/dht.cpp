@@ -11,7 +11,7 @@ Dht::Dht(uint8_t dhtPin){
 }
 
 // Método responsável por configurar sensor DHT
-bool Dht::setup(){
+bool Dht::configure(){
   // Verifica instanciações de sensor
   if(_dht == NULL || _sensor == NULL) return false;
 

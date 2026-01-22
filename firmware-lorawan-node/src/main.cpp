@@ -7,7 +7,6 @@
 */
 
 /*============================================= Librarys =================================================*/ 
-
 // Arduino core library
 #include <Arduino.h>
 
@@ -27,7 +26,6 @@
 #include "freertos/queue.h"
 
 /*============================================== Defines ans consts ===========================================*/ 
-
 // DHT pins
 #define DHT_PIN 13
 
@@ -51,7 +49,6 @@ const uint8_t PROGMEM APPKEY[16] = { 0x12, 0xAF, 0xED, 0xA9, 0x0A, 0x5F, 0xA0, 0
 #define UPLINK_INTERVAL 180000
 
 /*================================================ FreeRTOS variables ======================================*/
-
 /*
 Task                Core  Prio  Description
 -------------------------------------------------------------------------------
@@ -99,7 +96,6 @@ Dht DHT(DHT_PIN);
 Display DisplayModule(&Wire);
 
 /*============================================== Arduino setup and loop ==========================================*/
-
 void setup() {
     // Initialize serial port
     Serial.begin(9600);
@@ -264,13 +260,17 @@ void vUplinkTask(void* pvParameters){
         memcpy(packet + 2 * sizeof(int32_t) , &rssi, sizeof(int32_t));
         
         // Send uplink
-        LoRaWANModule.uplink(packet, UPLINK_PACKET_SIZE, 1, false);
-
-        // Show uplink info in display
         if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
             DisplayModule.clear();
-            DisplayModule.setCursor(SCREEN_WIDTH/2,SCREEN_HEIGHT/2);
-            DisplayModule.println("Uplink sent!", 2);
+            DisplayModule.setCursor(0,DisplayModule.height()/2);
+            DisplayModule.println("Uplinking...", 2);
+            xSemaphoreGive(xDisplatMutex);
+        }
+        LoRaWANModule.uplink(packet, UPLINK_PACKET_SIZE, 1, false);
+        if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
+            DisplayModule.clear();
+            DisplayModule.setCursor(0,DisplayModule.height()/2);
+            DisplayModule.println("Uplinked!", 2);
             xSemaphoreGive(xDisplatMutex);
         }
     }

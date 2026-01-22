@@ -85,6 +85,9 @@ typedef struct{
     float temperature;
 }dhtQueueData_t;
 
+// Mutex handles 
+xSemaphoreHandle xDisplatMutex = NULL;
+
 /*================================================ Global modules ======================================*/
 // LoRaWAN
 LoRaWAN LoRaWANModule(&SPI);
@@ -101,6 +104,13 @@ void setup() {
     // Initialize serial port
     Serial.begin(9600);
     delay(1000);
+
+    // Display setup
+    DisplayModule.setCommunicationPins(OLED_SDA, OLED_SCL);
+    if(!DisplayModule.configure()){
+        Serial.println("Display setup failed");
+        while(1);
+    }
 
     /* Configure RTOS */
     // Create DHT queue
@@ -122,6 +132,9 @@ void setup() {
         Serial.println("Uplink timer creation failed!");
         while(1);
     }
+
+    // Create Display mutex
+    xDisplatMutex = xSemaphoreCreateMutex();
 
     // Create Network Events Task
     xTaskCreatePinnedToCore(
@@ -176,8 +189,20 @@ void vNetworkEventsTask(void *pvParameters){
     LoRaWANModule.setKeys(APPEUI, DEVEUI, APPKEY);
     LoRaWANModule.configure();
 
-    // Starts node joining in LoRaWAN network 
+    // Starts node joining in LoRaWAN network
+    if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
+        DisplayModule.clear();
+        DisplayModule.setCursor(0,SCREEN_HEIGHT/2);
+        DisplayModule.println("Joining...", 2);
+        xSemaphoreGive(xDisplatMutex);
+    }
     LoRaWANModule.iniciateJoin();
+    if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
+        DisplayModule.clear();
+        DisplayModule.setCursor(0,SCREEN_HEIGHT/2);
+        DisplayModule.println("Joined!", 2);
+        xSemaphoreGive(xDisplatMutex);
+    }
 
     // Create Uplink Task agter joining started
     xTaskCreatePinnedToCore(
@@ -240,6 +265,14 @@ void vUplinkTask(void* pvParameters){
         
         // Send uplink
         LoRaWANModule.uplink(packet, UPLINK_PACKET_SIZE, 1, false);
+
+        // Show uplink info in display
+        if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
+            DisplayModule.clear();
+            DisplayModule.setCursor(SCREEN_WIDTH/2,SCREEN_HEIGHT/2);
+            DisplayModule.println("Uplink sent!", 2);
+            xSemaphoreGive(xDisplatMutex);
+        }
     }
 }
 
@@ -247,13 +280,6 @@ void vDhtTask(void* pvParameters){
     // DHT setup
     if(!DHT.configure()){
         Serial.println("Setup dht sensor failed");
-        while(1);
-    }
-
-    // Display setup
-    DisplayModule.setCommunicationPins(OLED_SDA, OLED_SCL);
-    if(!DisplayModule.configure()){
-        Serial.println("Display setup failed");
         while(1);
     }
 
@@ -266,12 +292,15 @@ void vDhtTask(void* pvParameters){
         dhtQueueData.humidity = DHT.getHumidity();
 
         // Update display
-        DisplayModule.clear();
-        DisplayModule.setCursor(0,0);
-        DisplayModule.println("Temp: ", 2);
-        DisplayModule.println(String(dhtQueueData.temperature) + " C", 2);
-        DisplayModule.println("Hum: ", 2);
-        DisplayModule.println(String(dhtQueueData.humidity) + " %", 2);
+        if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
+            DisplayModule.clear();
+            DisplayModule.setCursor(0,0);
+            DisplayModule.println("Temp: ", 2);
+            DisplayModule.println(String(dhtQueueData.temperature) + " C", 2);
+            DisplayModule.println("Hum: ", 2);
+            DisplayModule.println(String(dhtQueueData.humidity) + " %", 2);
+            xSemaphoreGive(xDisplatMutex);
+        }
 
         // Send data to queue for uplink task
         xQueueSend(xDhtQueueHandle, &dhtQueueData, portMAX_DELAY);

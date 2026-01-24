@@ -197,16 +197,12 @@ void vNetworkEventsTask(void *pvParameters){
 
     // Starts node joining in LoRaWAN network
     if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
-        DisplayModule.clear();
-        DisplayModule.setCursor(0,SCREEN_HEIGHT/2);
-        DisplayModule.println("Joining...", 2);
+        DisplayModule.printCentralText("Joining...", 2);
         xSemaphoreGive(xDisplatMutex);
     }
     LoRaWANModule.iniciateJoin();
     if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
-        DisplayModule.clear();
-        DisplayModule.setCursor(0,SCREEN_HEIGHT/2);
-        DisplayModule.println("Joined!", 2);
+        DisplayModule.printCentralText("Joined!", 2);
         xSemaphoreGive(xDisplatMutex);
     }
 
@@ -273,16 +269,12 @@ void vUplinkTask(void* pvParameters){
         
         // Send uplink
         if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
-            DisplayModule.clear();
-            DisplayModule.setCursor(0,DisplayModule.height()/2);
-            DisplayModule.println("Uplinking...", 2);
+            DisplayModule.printCentralText("Uplinking...", 2);
             xSemaphoreGive(xDisplatMutex);
         }
         LoRaWANModule.uplink(packet, UPLINK_PACKET_SIZE, 1, false);
         if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
-            DisplayModule.clear();
-            DisplayModule.setCursor(0,DisplayModule.height()/2);
-            DisplayModule.println("Uplinked!", 2);
+            DisplayModule.printCentralText("Uplinked!", 2);
             xSemaphoreGive(xDisplatMutex);
         }
 
@@ -314,12 +306,7 @@ void vDhtTask(void* pvParameters){
 
         // Update display
         if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
-            DisplayModule.clear();
-            DisplayModule.setCursor(0,0);
-            DisplayModule.println("Temp: ", 2);
-            DisplayModule.println(String(dhtQueueData.temperature) + " C", 2);
-            DisplayModule.println("Hum: ", 2);
-            DisplayModule.println(String(dhtQueueData.humidity) + " %", 2);
+            DisplayModule.printTempAndHumidity(dhtQueueData.temperature, dhtQueueData.humidity, 2);
             xSemaphoreGive(xDisplatMutex);
         }
 

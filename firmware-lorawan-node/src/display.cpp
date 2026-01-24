@@ -22,6 +22,14 @@ void Display::clear(){
     _oled->clearDisplay();
 }
 
+int16_t Display::width(){
+    return _oled->width();
+}
+
+int16_t Display::height(){
+    return _oled->height();
+}
+
 void Display::setCursor(int16_t x, int16_t y){
     _oled->setCursor(x, y);
 }
@@ -40,10 +48,17 @@ void Display::println(const String &text, uint8_t size){
     _oled->display();
 }
 
-int16_t Display::width(){
-    return _oled->width();
+void Display::printCentralText(const String &text, uint8_t size){
+    this->clear();
+    this->setCursor(0,this->height()/2);
+    this->print(text, size);
 }
 
-int16_t Display::height(){
-    return _oled->height();
+void Display::printTempAndHumidity(float temperature, float humidity, uint8_t size){
+    this->clear();
+    this->setCursor(0,0);
+    this->println("Temp: ", size);
+    this->println(String(temperature) + " C", size);
+    this->println("Hum: ", size);
+    this->println(String(humidity) + " %", size);
 }

@@ -27,11 +27,13 @@ public:
     void setCommunicationPins(uint8_t sda, uint8_t scl);
     bool configure();
     void clear();
+    int16_t width();
+    int16_t height();
     void setCursor(int16_t x, int16_t y);
     void print(const String &text, uint8_t size);
     void println(const String &text, uint8_t size);
-    int16_t width();
-    int16_t height();
+    void printCentralText(const String &text, uint8_t size);
+    void printTempAndHumidity(float temperature, float humidity, uint8_t size);
 };
 
 

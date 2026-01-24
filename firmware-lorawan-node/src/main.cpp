@@ -25,6 +25,9 @@
 #include "freertos/timers.h"
 #include "freertos/queue.h"
 
+// Esp32 sleep
+#include "esp_sleep.h"
+
 /*============================================== Defines ans consts ===========================================*/ 
 // DHT pins
 #define DHT_PIN 13
@@ -46,7 +49,11 @@ const uint8_t PROGMEM APPKEY[16] = { 0x12, 0xAF, 0xED, 0xA9, 0x0A, 0x5F, 0xA0, 0
 
 // Packet definitions 
 #define UPLINK_PACKET_SIZE 12
-#define UPLINK_INTERVAL 180000
+#define UPLINK_INTERVAL_MS 180000
+
+// Sleep definition
+#define PACKETS_BEFORE_SLEEP 3 
+#define SLEEP_INTERVAL_MS  3600000
 
 /*================================================ FreeRTOS variables ======================================*/
 /*
@@ -101,6 +108,9 @@ void setup() {
     Serial.begin(9600);
     delay(1000);
 
+    // Hability light sleep mode
+    esp_sleep_enable_timer_wakeup(SLEEP_INTERVAL_MS * 1000ULL); 
+
     // Display setup
     DisplayModule.setCommunicationPins(OLED_SDA, OLED_SCL);
     if(!DisplayModule.configure()){
@@ -119,7 +129,7 @@ void setup() {
     // Create and starts Uplink Timer
     xUplinkTimerHandle = xTimerCreate(
         "UPLINK_TIMER",
-        pdMS_TO_TICKS(UPLINK_INTERVAL),
+        pdMS_TO_TICKS(UPLINK_INTERVAL_MS),
         pdTRUE,
         NULL,
         vUplinkTimerCallback
@@ -222,12 +232,7 @@ void vNetworkEventsTask(void *pvParameters){
 }
 
 void vUplinkTask(void* pvParameters){
-    // Starts Uplink Timer
-    if(xTimerStart(xUplinkTimerHandle, 0) == pdFAIL){
-        Serial.println("Starts timer failed!");
-        while(1);
-    }
-
+    
     // DHT data
     dhtQueueData_t dhtQueueData = { .humidity = -100, .temperature = -100 };
     int32_t humidity = -100;
@@ -238,6 +243,13 @@ void vUplinkTask(void* pvParameters){
 
     // Packet
     uint8_t packet[UPLINK_PACKET_SIZE];
+    static uint8_t countPacket = 0;
+
+    // Starts Uplink Timer
+    if(xTimerStart(xUplinkTimerHandle, 0) == pdFAIL){
+        Serial.println("Starts timer failed!");
+        while(1);
+    }
 
     while(1){
         // Wait for timer notification
@@ -273,6 +285,15 @@ void vUplinkTask(void* pvParameters){
             DisplayModule.println("Uplinked!", 2);
             xSemaphoreGive(xDisplatMutex);
         }
+
+        // Increment packet count
+        countPacket++;
+
+        // Enter sleep after certain number of packets
+        if(countPacket == PACKETS_BEFORE_SLEEP){
+            countPacket = 0;
+            esp_light_sleep_start();
+        }
     }
 }
 
@@ -306,6 +327,6 @@ void vDhtTask(void* pvParameters){
         xQueueSend(xDhtQueueHandle, &dhtQueueData, portMAX_DELAY);
 
         // Wait for next cycle
-        vTaskDelay(pdMS_TO_TICKS(UPLINK_INTERVAL)/30);
+        vTaskDelay(pdMS_TO_TICKS(UPLINK_INTERVAL_MS)/30);
     }
 }

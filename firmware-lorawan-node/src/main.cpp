@@ -264,7 +264,7 @@ void vUplinkTask(void* pvParameters){
         }
         
         // Get last rssi value from LMIC
-        rssi = LMIC.rssi;                   
+        rssi = LoRaWANModule.getDownlinkRssi();                   
         memcpy(packet + 2 * sizeof(int32_t) , &rssi, sizeof(int32_t));
         
         // Send uplink

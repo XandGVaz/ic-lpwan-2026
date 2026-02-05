@@ -245,5 +245,44 @@ void LoRaWAN::uplink(uint8_t* data, uint8_t size, uint8_t port, bool confirmedMo
 }
 
 
+int32_t LoRaWAN::getDownlinkSnr(){
+    return LMIC.snr / 4;
+}
+
+int32_t LoRaWAN::getDownlinkRssi(){
+    // Variables
+    int32_t snr;
+    int32_t rssi;
+
+    // If using MCCI LMIC library, return rssi directly
+    #ifdef MCCI_LMIC
+        rssi = LMIC.rssi - RSSI_OFFSET;
+        
+    // Else, calculate rssi based on sx1272/76 datasheet
+    #else
+        // Get rssi adjust based on frequency  
+        int32_t rssiAdjust;
+        if(LMIC.freq > LORAWAN_SX1276_FREQ_LF_MAX){
+            rssiAdjust = LORAWAN_SX1276_RSSI_ADJUST_HF;
+        }
+        else{
+            rssiAdjust = LORAWAN_SX1276_RSSI_ADJUST_LF;   
+        }
+
+        // Get SNR
+        snr = this->getDownlinkSnr();
+
+        // Revert modification (applied in lmic/radio.c) to get PacketRssi.
+        int32_t packetRssi = LMIC.rssi + 125 - LORAWAN_RSSI_OFFSET;
+        if (snr < 0){
+            rssi = rssiAdjust + packetRssi + snr;
+        }
+        else{
+            rssi = rssiAdjust + (16 * packetRssi) / 15;
+        }
+    #endif
+
+    return rssi;
+}
 
 

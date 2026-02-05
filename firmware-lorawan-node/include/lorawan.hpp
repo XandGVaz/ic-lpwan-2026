@@ -11,6 +11,14 @@
 #include <Arduino.h>
 #include <SPI.h>
 
+/*============================================= Defines ==================================================*/ 
+// RSSI offset for SX1276 LMIC library  
+#define LORAWAN_RSSI_OFFSET            64
+#define LORAWAN_SX1276_FREQ_LF_MAX     525000000     
+#define LORAWAN_SX1272_RSSI_ADJUST     -139
+#define LORAWAN_SX1276_RSSI_ADJUST_LF  -164
+#define LORAWAN_SX1276_RSSI_ADJUST_HF  -157
+
 /*=========================================== LoRaWAN class ==============================================*/
 
 // LoRaWAN class
@@ -29,6 +37,8 @@ class LoRaWAN {
     void loop();
     void iniciateJoin();
     void uplink(uint8_t* data, uint8_t size, uint8_t port, bool confirmedMode);
+    int32_t getDownlinkSnr();
+    int32_t getDownlinkRssi();
 };
 
 #endif // LORAWAN_HPP

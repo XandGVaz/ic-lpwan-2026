@@ -12,7 +12,9 @@
 
 // I2C address and pins
 #define SCREEN_ADDRESS 0x3C 
-#define OLED_RESET     16   
+#define OLED_RESET     16
+#define OLED_SDA       4    
+#define OLED_SCL       15     
 
 
 class Display{
@@ -21,9 +23,8 @@ class Display{
     uint8_t _sda;
     uint8_t _scl;
 public:
-    Display(TwoWire* Wire = &Wire): _wire(Wire) {
-        _oled = new Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, _wire, OLED_RESET);
-    }
+    Display(TwoWire* Wire = &Wire): _wire(Wire), 
+    _oled(new Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, Wire, OLED_RESET)), _sda(OLED_SDA), _scl(OLED_SCL){}
     void setCommunicationPins(uint8_t sda, uint8_t scl);
     bool configure();
     void clear();

@@ -53,7 +53,7 @@ const uint8_t PROGMEM APPKEY[16] = { 0x12, 0xAF, 0xED, 0xA9, 0x0A, 0x5F, 0xA0, 0
 
 // Sleep definition
 #define PACKETS_BEFORE_SLEEP 3 
-#define SLEEP_INTERVAL_MS  3600000
+#define SLEEP_INTERVAL_MS  360000
 
 /*================================================ FreeRTOS variables ======================================*/
 /*

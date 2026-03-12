@@ -10,7 +10,7 @@
 
 /*===============================================================================*/
 // Definições do DHT
-#define DHTTYPE DHT22   // tipo de sensor DHT
+#define DHTTYPE DHT11   // tipo de sensor DHT
 
 /*===============================================================================*/
 // Classe do sensor DHT

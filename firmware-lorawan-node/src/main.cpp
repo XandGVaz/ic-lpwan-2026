@@ -30,7 +30,7 @@
 
 /*============================================== Defines ans consts ===========================================*/ 
 // DHT pins
-#define DHT_PIN 13
+#define DHT_PIN 21
 
 // LoRa pins
 #define LORA_MOSI 27
@@ -49,11 +49,11 @@ const uint8_t PROGMEM APPKEY[16] = { 0x12, 0xAF, 0xED, 0xA9, 0x0A, 0x5F, 0xA0, 0
 
 // Packet definitions 
 #define UPLINK_PACKET_SIZE 12
-#define UPLINK_INTERVAL_MS 180000
+#define UPLINK_INTERVAL_MS 60000
 
 // Sleep definition
 #define PACKETS_BEFORE_SLEEP 3 
-#define SLEEP_INTERVAL_MS  360000
+#define SLEEP_INTERVAL_MS  60000
 
 /*================================================ FreeRTOS variables ======================================*/
 /*
@@ -228,7 +228,6 @@ void vNetworkEventsTask(void *pvParameters){
 }
 
 void vUplinkTask(void* pvParameters){
-    
     // DHT data
     dhtQueueData_t dhtQueueData = { .humidity = -100, .temperature = -100 };
     int32_t humidity = -100;

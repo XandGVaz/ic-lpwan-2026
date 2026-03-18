@@ -14,6 +14,9 @@ RTC_DATA_ATTR devaddr_t Devaddr = 0;
 RTC_DATA_ATTR u1_t NwkKey[16];
 RTC_DATA_ATTR u1_t ArtKey[16];
 
+// Variable to verify if the device is already joined after deep sleep reset
+RTC_DATA_ATTR bool isJoined = false;
+
 // Keys and EUIs
 uint8_t APPEUI[8];
 uint8_t DEVEUI[8];
@@ -196,7 +199,7 @@ void LoRaWAN::setKeys(const uint8_t* appEui, const uint8_t* devEui, const uint8_
     memccpy(APPKEY, appKey, 0, 16);
 }
 
-void LoRaWAN::configure(){
+void LoRaWAN::configure(uint8_t spreadFactor, uint32_t txPower, bool adrMode, bool checkLinkMode){
     // Initialize SPI
     _spiHandler->begin(_LoRaSck, _LoRaMiso, _LoRaMosi, _LoRaSs);
 
@@ -215,13 +218,13 @@ void LoRaWAN::configure(){
     }
     
     // Disable ADR and link check validation, because ADR tends to complicate testing.
-    LMIC_setAdrMode(0);
+    LMIC_setAdrMode(adrMode);
     
     // Disable link check validation, automatically enabled during join
-    LMIC_setLinkCheckMode(0);
+    LMIC_setLinkCheckMode(checkLinkMode);
 
     // Set static session parameters. Instead of dynamically establishing a session
-    LMIC_setDrTxpow(DR_SF10, 17);
+    LMIC_setDrTxpow(spreadFactor, txPower);
 }
 
 void LoRaWAN::loop(){
@@ -230,6 +233,13 @@ void LoRaWAN::loop(){
 }
 
 void LoRaWAN::iniciateJoin(){
+    // If already joined, skip join procedure and set session keys directly
+    if(isJoined){
+        Serial.println("Already joined, skipping join procedure");
+        LMIC_setSession(Netid, Devaddr, NwkKey, ArtKey);
+        return;
+    }
+
     // Start joining procedure
     LMIC_startJoining();
 }

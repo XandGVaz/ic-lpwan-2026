@@ -33,7 +33,7 @@ class LoRaWAN {
     LoRaWAN(SPIClass* spiHandler): _spiHandler(spiHandler) {}
     void setRadioCommunicationPins(uint8_t LoRaMiso, uint8_t LoRaMosi, uint8_t LoRaSck, uint8_t LoRaSs);
     void setKeys(const uint8_t* appEui, const uint8_t* devEui, const uint8_t* appKey);
-    void configure();
+    void configure(uint8_t spreadFactor = DR_SF7, uint32_t txPower = 14, bool adrMode = false, bool checkLinkMode = false);
     void loop();
     void iniciateJoin();
     void uplink(uint8_t* data, uint8_t size, uint8_t port, bool confirmedMode);

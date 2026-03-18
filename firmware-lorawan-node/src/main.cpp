@@ -193,7 +193,7 @@ void vNetworkEventsTask(void *pvParameters){
     // Configure LoRaWAN module
     LoRaWANModule.setRadioCommunicationPins(LORA_MISO, LORA_MOSI, LORA_SCK, LORA_SS);
     LoRaWANModule.setKeys(APPEUI, DEVEUI, APPKEY);
-    LoRaWANModule.configure();
+    LoRaWANModule.configure(DR_SF10, 17);
 
     // Starts node joining in LoRaWAN network
     if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){

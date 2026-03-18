@@ -52,8 +52,8 @@ const uint8_t PROGMEM APPKEY[16] = { 0x12, 0xAF, 0xED, 0xA9, 0x0A, 0x5F, 0xA0, 0
 #define UPLINK_INTERVAL_MS 30000
 
 // Sleep definition
-#define PACKETS_BEFORE_SLEEP 5
-#define SLEEP_INTERVAL_MS  300000
+#define PACKETS_BEFORE_SLEEP 1
+#define SLEEP_INTERVAL_MS  30000
 
 /*================================================ FreeRTOS variables ======================================*/
 /*
@@ -193,7 +193,7 @@ void vNetworkEventsTask(void *pvParameters){
     // Configure LoRaWAN module
     LoRaWANModule.setRadioCommunicationPins(LORA_MISO, LORA_MOSI, LORA_SCK, LORA_SS);
     LoRaWANModule.setKeys(APPEUI, DEVEUI, APPKEY);
-    LoRaWANModule.configure(DR_SF10, 17);
+    LoRaWANModule.configure(DR_SF11, 17);
 
     // Starts node joining in LoRaWAN network
     if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
@@ -252,7 +252,6 @@ void vUplinkTask(void* pvParameters){
 
         // Get DHT data from queue
         if(xQueueReceive(xDhtQueueHandle, &dhtQueueData, 0) == pdTRUE){
-
             // Prepare data packet
             humidity = (int32_t)(dhtQueueData.humidity * 100.0);      
             temperature = (int32_t)(dhtQueueData.temperature * 100.0);

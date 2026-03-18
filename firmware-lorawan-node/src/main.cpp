@@ -49,11 +49,11 @@ const uint8_t PROGMEM APPKEY[16] = { 0x12, 0xAF, 0xED, 0xA9, 0x0A, 0x5F, 0xA0, 0
 
 // Packet definitions 
 #define UPLINK_PACKET_SIZE 12
-#define UPLINK_INTERVAL_MS 60000
+#define UPLINK_INTERVAL_MS 30000
 
 // Sleep definition
-#define PACKETS_BEFORE_SLEEP 3 
-#define SLEEP_INTERVAL_MS  60000
+#define PACKETS_BEFORE_SLEEP 5
+#define SLEEP_INTERVAL_MS  300000
 
 /*================================================ FreeRTOS variables ======================================*/
 /*
@@ -283,7 +283,7 @@ void vUplinkTask(void* pvParameters){
         // Enter sleep after certain number of packets
         if(countPacket == PACKETS_BEFORE_SLEEP){
             countPacket = 0;
-            esp_light_sleep_start();
+            esp_deep_sleep_start();
         }
     }
 }

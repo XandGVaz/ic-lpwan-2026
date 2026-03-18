@@ -8,6 +8,12 @@ uint8_t DataPacket[12];
 uint8_t Port;
 uint8_t ConfirmedMode;
 
+// Session keys, Netid and Devaddr, persist in mempry after deep sleep reset
+RTC_DATA_ATTR u4_t Netid = 0;
+RTC_DATA_ATTR devaddr_t Devaddr = 0;
+RTC_DATA_ATTR u1_t NwkKey[16];
+RTC_DATA_ATTR u1_t ArtKey[16];
+
 // Keys and EUIs
 uint8_t APPEUI[8];
 uint8_t DEVEUI[8];
@@ -40,29 +46,23 @@ void printHex2(unsigned v) {
 
 // Function to print joining information
 void printJoiningInfo() {
-    // Session keys
-    u4_t netid = 0;
-    devaddr_t devaddr = 0;
-    u1_t nwkKey[16];
-    u1_t artKey[16];
-
     // Get session keys
-    LMIC_getSessionKeys(&netid, &devaddr, nwkKey, artKey);
+    LMIC_getSessionKeys(&Netid, &Devaddr, NwkKey, ArtKey);
 
     // Print session info
-    Serial.print("netid: ");
-    Serial.println(netid, DEC);
-    Serial.print("devaddr: ");
-    Serial.println(devaddr, HEX);
+    Serial.print("Netid: ");
+    Serial.println(Netid, DEC);
+    Serial.print("Devaddr: ");
+    Serial.println(Devaddr, HEX);
     Serial.print("AppSKey: ");
-    for (size_t i=0; i<sizeof(artKey); ++i) {
+    for (size_t i=0; i<sizeof(ArtKey); ++i) {
         if (i != 0) Serial.print("-");
-        printHex2(artKey[i]);
+        printHex2(ArtKey[i]);
     }
     Serial.print("\nNwkSKey: ");
-    for (size_t i=0; i<sizeof(nwkKey); ++i) {
+    for (size_t i=0; i<sizeof(NwkKey); ++i) {
         if (i != 0) Serial.print("-");
-        printHex2(nwkKey[i]);
+        printHex2(NwkKey[i]);
     }
 }
 
@@ -221,7 +221,7 @@ void LoRaWAN::configure(){
     LMIC_setLinkCheckMode(0);
 
     // Set static session parameters. Instead of dynamically establishing a session
-    LMIC_setDrTxpow(DR_SF12, 14);
+    LMIC_setDrTxpow(DR_SF10, 17);
 }
 
 void LoRaWAN::loop(){

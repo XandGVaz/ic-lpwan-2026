@@ -82,12 +82,8 @@ TimerHandle_t xUplinkTimerHandle = NULL;
 void vUplinkTimerCallback(TimerHandle_t xTimer);
 
 // Queues handles and data types
-QueueHandle_t xDhtQueueHandle = NULL;
-
-typedef struct{
-    float humidity;
-    float temperature;
-}dhtQueueData_t;
+QueueHandle_t xTemperatureQueueHandle = NULL;
+QueueHandle_t xHumidityQueueHandle = NULL;
 
 // Mutex handles 
 xSemaphoreHandle xDisplatMutex = NULL;
@@ -119,12 +115,20 @@ void setup() {
     }
 
     /* Configure RTOS */
-    // Create DHT queue
-    xDhtQueueHandle = xQueueCreate(3, sizeof(dhtQueueData_t));
-    if(xDhtQueueHandle == NULL){
-        Serial.println("DHT queue creation failed!");
+    // Create Humidity queue
+    xHumidityQueueHandle = xQueueCreate(3, sizeof(float));
+    if(xHumidityQueueHandle == NULL){
+        Serial.println("Humidity queue creation failed!");
         while(1);
     }
+    
+    // Create Temperature queue
+    xTemperatureQueueHandle = xQueueCreate(3, sizeof(float));
+    if(xTemperatureQueueHandle == NULL){
+        Serial.println("Temperature queue creation failed!");
+        while(1);
+    }
+    
 
     // Create and starts Uplink Timer
     xUplinkTimerHandle = xTimerCreate(
@@ -193,7 +197,7 @@ void vNetworkEventsTask(void *pvParameters){
     // Configure LoRaWAN module
     LoRaWANModule.setRadioCommunicationPins(LORA_MISO, LORA_MOSI, LORA_SCK, LORA_SS);
     LoRaWANModule.setKeys(APPEUI, DEVEUI, APPKEY);
-    LoRaWANModule.configure(DR_SF11, 17);
+    LoRaWANModule.configure(DR_SF11, 20);
 
     // Starts node joining in LoRaWAN network
     if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
@@ -229,7 +233,6 @@ void vNetworkEventsTask(void *pvParameters){
 
 void vUplinkTask(void* pvParameters){
     // DHT data
-    dhtQueueData_t dhtQueueData = { .humidity = -100, .temperature = -100 };
     int32_t humidity = -100;
     int32_t temperature = -100;
     
@@ -251,13 +254,14 @@ void vUplinkTask(void* pvParameters){
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
         // Get DHT data from queue
-        if(xQueueReceive(xDhtQueueHandle, &dhtQueueData, 0) == pdTRUE){
-            // Prepare data packet
-            humidity = (int32_t)(dhtQueueData.humidity * 100.0);      
-            temperature = (int32_t)(dhtQueueData.temperature * 100.0);
-            
+        if(xQueueReceive(xHumidityQueueHandle, &humidity, 0) == pdTRUE){
             // Make packet with raw bytes
             memcpy(packet, &humidity, sizeof(int32_t));
+        }
+
+        // Get DHT data from queue
+        if(xQueueReceive(xTemperatureQueueHandle, &temperature, 0) == pdTRUE){
+            // Make packet with raw bytes
             memcpy(packet + sizeof(int32_t), &temperature, sizeof(int32_t));
         }
         
@@ -295,21 +299,23 @@ void vDhtTask(void* pvParameters){
     }
 
     // DHT data
-    dhtQueueData_t dhtQueueData = { .humidity = -1.0, .temperature = -1.0 };
+    float humidity = -1.0;
+    float temperature = -1.0;
 
     while(1){
         // Read sensor data
-        dhtQueueData.temperature = DHT.getTemperature();
-        dhtQueueData.humidity = DHT.getHumidity();
+        temperature = DHT.getTemperature();
+        humidity = DHT.getHumidity();
 
         // Update display
         if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE){
-            DisplayModule.printTempAndHumidity(dhtQueueData.temperature, dhtQueueData.humidity, 2);
+            DisplayModule.printTempAndHumidity(temperature, humidity, 2);
             xSemaphoreGive(xDisplatMutex);
         }
 
         // Send data to queue for uplink task
-        xQueueSend(xDhtQueueHandle, &dhtQueueData, portMAX_DELAY);
+        xQueueSend(xHumidityQueueHandle, &humidity, portMAX_DELAY);
+        xQueueSend(xTemperatureQueueHandle, &temperature, portMAX_DELAY);
 
         // Wait for next cycle
         vTaskDelay(pdMS_TO_TICKS(UPLINK_INTERVAL_MS)/30);

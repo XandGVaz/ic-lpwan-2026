@@ -141,7 +141,8 @@ void setup() {
         Serial.println("Uplink timer creation failed!");
         while(1);
     }
-
+    // DHT module
+    Dht DHT(DHT_PIN);
     // Create Display mutex
     xDisplatMutex = xSemaphoreCreateMutex();
 

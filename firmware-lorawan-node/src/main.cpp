@@ -128,7 +128,6 @@ void setup() {
         Serial.println("Temperature queue creation failed!");
         while(1);
     }
-    
 
     // Create and starts Uplink Timer
     xUplinkTimerHandle = xTimerCreate(
@@ -291,7 +290,7 @@ void vUplinkTask(void* pvParameters){
     }
 }
 
-void vDhtTask(void* pvParameters){
+void vDhtTask(void* pvParameters){    
     // DHT setup
     if(!DHT.configure()){
         Serial.println("Setup dht sensor failed");
@@ -318,6 +317,6 @@ void vDhtTask(void* pvParameters){
         xQueueSend(xTemperatureQueueHandle, &temperature, portMAX_DELAY);
 
         // Wait for next cycle
-        vTaskDelay(pdMS_TO_TICKS(UPLINK_INTERVAL_MS)/30);
+        vTaskDelay(pdMS_TO_TICKS(UPLINK_INTERVAL_MS));
     }
 }

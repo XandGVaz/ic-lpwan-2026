@@ -1,3 +1,4 @@
+#pragma once
 #include "freertos/timers.h"
 
 // Timers handles

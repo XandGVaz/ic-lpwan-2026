@@ -20,20 +20,26 @@
 #include "freertos/timers.h"
 #include "freertos/queue.h"
 
+// RTOS manager
+#include "task_manager.hpp"
+#include "mutex_manager.hpp"
+#include "timer_manager.hpp"
+#include "queue_event.hpp"
+
 /*================================================ FreeRTOS variables ======================================*/
 /*
 Task                Core  Prio  Description
 -------------------------------------------------------------------------------
-vNetworkEventsTask    1     1    Manage LoRaWAN events and joining
-vUplinkTask           1     2    Send uplink packets periodically
-vDhtTask              0     1    Read DHT sensor data and send to uplink task
+vProtocolLoopTask    1     1    Manage LoRaWAN events and joining
+vUplinkTask          1     2    Send uplink packets periodically
+vSensorTask          0     1    Read DHT sensor data and send to uplink task
 -------------------------------------------------------------------------------
 */
 
 // Tasks handles
-TaskHandle_t xNetworkEventstaks = NULL;
+TaskHandle_t xProtocolLoopTaskHandle = NULL;
 TaskHandle_t xUplinkTaskHandle = NULL;
-TaskHandle_t xDhtTaskHandle = NULL;
+TaskHandle_t xSensorTaskHandle = NULL;
 
 // Timers handles
 TimerHandle_t xUplinkTimerHandle = NULL;
@@ -45,24 +51,19 @@ QueueHandle_t xHumidityQueueHandle = NULL;
 // Mutex handles 
 xSemaphoreHandle xDisplatMutex = NULL;
 
+// Task list
+TaskList taskList;
 
 /*============================================== Arduino setup and loop ==========================================*/
 void setup() {
     // Initialize serial port
     Serial.begin(9600);
-    delay(1000);
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
     /* === Configure RTOS Queues ===*/
     xHumidityQueueHandle = xQueueCreate(3, sizeof(float));
-    if(xHumidityQueueHandle == NULL){
-        Serial.println("Humidity queue creation failed!");
-        while(1);
-    }    
     xTemperatureQueueHandle = xQueueCreate(3, sizeof(float));
-    if(xTemperatureQueueHandle == NULL){
-        Serial.println("Temperature queue creation failed!");
-        while(1);
-    }
+
 
     /* === Configure RTOS Timers ===*/
     xUplinkTimerHandle = xTimerCreate(
@@ -72,41 +73,28 @@ void setup() {
         NULL,
         vUplinkTimerCallback
     );
-    if(xUplinkTimerHandle == NULL){
-        Serial.println("Uplink timer creation failed!");
-        while(1);
-    }
 
     /* === Configure RTOS Mutex ===*/
     xDisplatMutex = xSemaphoreCreateMutex();
 
     /* === Configure RTOS Tasks ===*/
-    xTaskCreatePinnedToCore(
-        vNetworkEventsTask,                    
-        "NETWORK_EVENTS_TASK",                  
-        configMINIMAL_STACK_SIZE + 1024,                 
-        NULL,                           
-        1,                              
-        &xNetworkEventstaks,                 
-        APP_CPU_NUM           
-    ); 
-    if(xNetworkEventstaks == NULL){
-        Serial.println("Network events task creation failed!");
-        while(1);
-    }
-    xTaskCreatePinnedToCore(
-        vDhtTask,                    
-        "DHT_TASK",                  
-        configMINIMAL_STACK_SIZE + 1024,                 
-        NULL,                           
-        1,                              
-        &xDhtTaskHandle,                 
-        PRO_CPU_NUM           
-    );
-    if(xDhtTaskHandle == NULL){
-        Serial.println("DHT task creation failed!");
-        while(1);
-    }
+    taskList.push_back({
+        .handle = xProtocolLoopTaskHandle,
+        .function = vProtocolLoopTask,
+        .stackSize = configMINIMAL_STACK_SIZE + 1024,
+        .parameters = NULL,
+        .priority = 1,
+        .name = "Protocol"
+    });
+    taskList.push_back({
+        .handle = xSensorTaskHandle,
+        .function = vSensorTask,
+        .stackSize = configMINIMAL_STACK_SIZE + 1024,
+        .parameters = NULL,
+        .priority = 2,
+        .name = "Sensor"
+    });
+    createTasks(taskList);
 }
 
 void loop() {

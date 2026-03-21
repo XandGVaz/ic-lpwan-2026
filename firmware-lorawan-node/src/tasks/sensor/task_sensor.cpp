@@ -1,9 +1,11 @@
 #include "task_sensor.hpp"
+#include "dht.hpp"
+#include "queue_event.hpp"
 
 // DHT module
 Dht DHT(DHT_PIN);
 
-void vDhtTask(void* pvParameters){    
+void vSensorTask(void* pvParameters){    
     // DHT setup
     if(!DHT.configure()){
         Serial.println("Setup dht sensor failed");

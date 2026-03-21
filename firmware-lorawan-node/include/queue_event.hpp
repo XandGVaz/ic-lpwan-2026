@@ -1,3 +1,4 @@
+#pragma once
 #include "freertos/queue.h"
 
 // Queues handles and data types

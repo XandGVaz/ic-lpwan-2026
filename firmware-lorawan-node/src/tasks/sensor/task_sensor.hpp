@@ -1,8 +1,6 @@
-#ifndef TASK_SENSOR_HPP
-#define TASK_SENSOR_HPP
-
-#include "dht.hpp"
-#include "queue_event.hpp"
+#pragma once
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 // Sensor intervalo definitions
 #define SENSOR_READ_INTERVAL_MS 20000
@@ -10,7 +8,8 @@
 // DHT pins
 #define DHT_PIN 21
 
-// Tasks prototypes
-void vDhtTask(void* pvParameters);
+// Tasks handles
+extern TaskHandle_t xSensorTaskHandle;
 
-#endif /* TASK_SENSOR_HPP */
+// Tasks prototypes
+void vSensorTask(void* pvParameters);

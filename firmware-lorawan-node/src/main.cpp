@@ -1,18 +1,14 @@
 /*
     @author: Vitor Alexandre Garcia Vaz (XandgVaz)
-    @date: jan, 2026
-    @description: Main file for LoRaWAN node with DHT22 sensor
-    This code reads temperature and humidity data from a DHT22 sensor and sends it via LoRaWAN using 
+    @date: mar, 2026
+    @description: Main file for LoRaWAN node with DHT11 sensor
+    This code reads temperature and humidity data from a DHT11 sensor and sends it via LoRaWAN using 
     the MCCI LoRaWAN LMIC library.
 */
 
 /*============================================= Librarys =================================================*/ 
 // Arduino core library
 #include <Arduino.h>
-
-// Tasks include
-#include "task_protocol.hpp"
-#include "task_sensor.hpp"
 
 // FreeRTOS API library
 #include "freertos/FreeRTOS.h"
@@ -25,6 +21,11 @@
 #include "mutex_manager.hpp"
 #include "timer_manager.hpp"
 #include "queue_event.hpp"
+
+// RTOS Tasks include
+#include "task_protocol.hpp"
+#include "task_sensor.hpp"
+
 
 /*================================================ FreeRTOS variables ======================================*/
 /*

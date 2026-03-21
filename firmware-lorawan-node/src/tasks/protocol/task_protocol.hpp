@@ -14,7 +14,7 @@
 
 // Sleep definition
 #define PACKETS_BEFORE_SLEEP 1
-#define SLEEP_INTERVAL_MS 150000
+#define SLEEP_INTERVAL_MS 570000
 
 // LoRa pins
 #define LORA_MOSI 27

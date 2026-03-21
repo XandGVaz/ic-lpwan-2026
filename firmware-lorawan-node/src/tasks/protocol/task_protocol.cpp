@@ -73,7 +73,9 @@ void vNetworkEventsTask(void *pvParameters){
 void vUplinkTask(void* pvParameters){
     // DHT data
     int32_t humidity = -100;
+    float humidityFloat = -1.0;
     int32_t temperature = -100;
+    float temperatureFloat = -1.0;
     
     // RSSI data
     int32_t rssi = 0;
@@ -93,14 +95,16 @@ void vUplinkTask(void* pvParameters){
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
         // Get DHT data from queue
-        if(xQueueReceive(xHumidityQueueHandle, &humidity, 0) == pdTRUE){
+        if(xQueueReceive(xHumidityQueueHandle, &humidityFloat, 0) == pdTRUE){
             // Make packet with raw bytes
+            humidity = (int32_t)(humidityFloat * 100); // Convert to integer with one decimal place
             memcpy(packet, &humidity, sizeof(int32_t));
         }
 
         // Get DHT data from queue
-        if(xQueueReceive(xTemperatureQueueHandle, &temperature, 0) == pdTRUE){
+        if(xQueueReceive(xTemperatureQueueHandle, &temperatureFloat, 0) == pdTRUE){
             // Make packet with raw bytes
+            temperature = (int32_t)(temperatureFloat * 100); // Convert to integer with one decimal place
             memcpy(packet + sizeof(int32_t), &temperature, sizeof(int32_t));
         }
         

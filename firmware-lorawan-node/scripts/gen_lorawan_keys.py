@@ -1,12 +1,7 @@
 
 import os
 from pathlib import Path
-
-# Tenta importar load_dotenv, mas continua mesmo se não estiver disponível
-try:
-    from dotenv import load_dotenv
-except ImportError:
-    load_dotenv = None
+from dotenv import load_dotenv
 
 ################################## Função para carregar variáveis do .env ou do ambiente ##############################
 def load_env_file() -> None:

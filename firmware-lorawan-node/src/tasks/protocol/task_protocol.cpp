@@ -6,17 +6,13 @@
 #include "timer_manager.hpp"
 #include "esp_sleep.h"
 #include "task_manager.hpp"
+#include "lorawan_keys.hpp"
 
 // LoRaWAN
 LoRaWAN LoRaWANModule(&SPI);
 
 // Display module
 Display DisplayModule(&Wire);
-
-// LoRa Keys
-const uint8_t PROGMEM APPEUI[8] = { 0x28, 0xE4, 0x61, 0xAA, 0xA4, 0xF6, 0xEC, 0xF1 };
-const uint8_t PROGMEM DEVEUI[8] = { 0x9D, 0x53, 0x07, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
-const uint8_t PROGMEM APPKEY[16] = { 0x12, 0xAF, 0xED, 0xA9, 0x0A, 0x5F, 0xA0, 0x7B, 0xBE, 0x9E, 0x7A, 0xC4, 0x0C, 0x71, 0xDC, 0x95 };
 
 /*============================================== RTOS callbacks ======================================*/
 void vUplinkTimerCallback(TimerHandle_t xTimer)

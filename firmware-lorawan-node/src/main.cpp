@@ -56,7 +56,8 @@ xSemaphoreHandle xDisplatMutex = NULL;
 TaskList taskList;
 
 /*============================================== Arduino setup and loop ==========================================*/
-void setup() {
+void setup() 
+{
     // Initialize serial port
     Serial.begin(9600);
     vTaskDelay(pdMS_TO_TICKS(1000));
@@ -98,7 +99,8 @@ void setup() {
     createTasks(taskList);
 }
 
-void loop() {
+void loop() 
+{
     // Delete loop task
     vTaskDelete(NULL);
 }

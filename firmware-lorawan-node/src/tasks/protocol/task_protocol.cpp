@@ -44,7 +44,8 @@ void vProtocolLoopTask(void *pvParameters)
     // Configure LoRaWAN module
     LoRaWANModule.setRadioCommunicationPins(LORA_MISO, LORA_MOSI, LORA_SCK, LORA_SS);
     LoRaWANModule.setKeys(APPEUI, DEVEUI, APPKEY);
-    LoRaWANModule.configure(DR_SF11, 20);
+    LoRaWANModule.configure(UPLINK_PACKET_SIZE, DR_SF11, 20, false, false);
+    LoRaWANModule.setConfirmedMode(false);
 
     // Starts node joining in LoRaWAN network
     if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE)
@@ -52,7 +53,7 @@ void vProtocolLoopTask(void *pvParameters)
         DisplayModule.printCentralText("Joining...", 2);
         xSemaphoreGive(xDisplatMutex);
     }
-    LoRaWANModule.iniciateJoin();
+    LoRaWANModule.connect(NULL, 1);
     if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE)
     {
         DisplayModule.printCentralText("Joined!", 2);
@@ -135,7 +136,7 @@ void vUplinkTask(void* pvParameters)
             DisplayModule.printCentralText("Uplinking...", 2);
             xSemaphoreGive(xDisplatMutex);
         }
-        LoRaWANModule.uplink(packet, UPLINK_PACKET_SIZE, 1, false);
+        LoRaWANModule.uplink(packet);
         if(xSemaphoreTake(xDisplatMutex, portMAX_DELAY) == pdTRUE)
         {
             DisplayModule.printCentralText("Uplinked!", 2);

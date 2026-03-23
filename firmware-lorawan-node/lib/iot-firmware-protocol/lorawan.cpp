@@ -1,10 +1,10 @@
 #include "lorawan.hpp"
 
 /*=========================================== LoRaWAN global variables ==================================*/
-
 // Uplink job
 osjob_t Sendjob;
-uint8_t DataPacket[12];
+uint16_t PacketSize = 128;
+uint8_t *DataPacket = NULL;
 uint8_t Port;
 uint8_t ConfirmedMode;
 
@@ -15,7 +15,7 @@ RTC_DATA_ATTR u1_t NwkKey[16];
 RTC_DATA_ATTR u1_t ArtKey[16];
 
 // Variable to verify if the device is already joined after deep sleep reset
-RTC_DATA_ATTR bool isJoined = false;
+RTC_DATA_ATTR bool IsJoined = false;
 
 // Keys and EUIs
 uint8_t APPEUI[8];
@@ -23,7 +23,6 @@ uint8_t DEVEUI[8];
 uint8_t APPKEY[16];
 
 /*=========================================== LMIC Library functions ======================================*/
-
 // Define keys and EUIs
 void os_getArtEui (u1_t* buf) { memcpy_P(buf, APPEUI, 8);}
 
@@ -110,9 +109,10 @@ void onEvent (ev_t ev) {
             break;
 
         case EV_JOINED:
+            IsJoined = true;
+            LMIC_setLinkCheckMode(0);
             Serial.println(F("EV_JOINED"));
             printJoiningInfo();
-            LMIC_setLinkCheckMode(0);
             break;
 
         case EV_JOIN_FAILED:
@@ -178,7 +178,7 @@ void do_send(osjob_t* j){
         Serial.println(F("OP_TXRXPEND, not sending"));
     } else {
         // Prepare upstream data transmission at the next possible time.
-        LMIC_setTxData2(Port, DataPacket, sizeof(DataPacket)-1, ConfirmedMode);
+        LMIC_setTxData2(Port, DataPacket, PacketSize - 1, ConfirmedMode);
         Serial.println(F("Packet queued"));
     }
     // Next TX is scheduled after TX_COMPLETE event.
@@ -199,9 +199,20 @@ void LoRaWAN::setKeys(const uint8_t* appEui, const uint8_t* devEui, const uint8_
     memccpy(APPKEY, appKey, 0, 16);
 }
 
-void LoRaWAN::configure(uint8_t spreadFactor, uint32_t txPower, bool adrMode, bool checkLinkMode){
+void LoRaWAN::setConfirmedMode(bool confirmedMode){
+    _confirmedMode = confirmedMode;
+}
+
+void LoRaWAN::configure(uint16_t packetSize, uint8_t spreadFactor, uint32_t txPower, bool adrMode, bool checkLinkMode){
     // Initialize SPI
     _spiHandler->begin(_LoRaSck, _LoRaMiso, _LoRaMosi, _LoRaSs);
+
+    // Allocate memory for data packet
+    if(DataPacket != NULL){
+        free(DataPacket);
+    }
+    DataPacket = (uint8_t*) malloc(packetSize * sizeof(uint8_t));
+    PacketSize = packetSize;
 
     // Initialize LMIC
     os_init();
@@ -234,7 +245,7 @@ void LoRaWAN::loop(){
 
 void LoRaWAN::iniciateJoin(){
     // If already joined, skip join procedure and set session keys directly
-    if(isJoined){
+    if(IsJoined){
         Serial.println("Already joined, skipping join procedure");
         LMIC_setSession(Netid, Devaddr, NwkKey, ArtKey);
         return;
@@ -244,13 +255,8 @@ void LoRaWAN::iniciateJoin(){
     LMIC_startJoining();
 }
 
-void LoRaWAN::uplink(uint8_t* data, uint8_t size, uint8_t port, bool confirmedMode){
-    // Copy data to global packet variable
-    memcpy(DataPacket, data, size);
-    Port = port;
-    ConfirmedMode = confirmedMode;
-
-    // Send packet
+void LoRaWAN::uplink(const uint8_t* data){
+    memcpy(DataPacket, data, sizeof(DataPacket));
     do_send(&Sendjob);
 }
 
@@ -293,6 +299,30 @@ int32_t LoRaWAN::getDownlinkRssi(){
     #endif
 
     return rssi;
+}
+
+bool LoRaWAN::connect(const char* server, int port){
+    // Start join procedure
+    Port = port;
+    this->iniciateJoin();
+    return IsJoined;
+}
+
+bool LoRaWAN::isConnected(){
+    // Check if already joined in network
+    return IsJoined;
+}
+
+void LoRaWAN::put(const char* resource, const char* payload){
+    // Copy payload to data packet and send uplink
+    uint8_t data[PacketSize];
+    memcpy(data, payload, PacketSize);
+    this->uplink(data);
+}
+
+void LoRaWAN::get(const char* resource, Tcallback callback){
+    // Store callback for later use when downlink is received
+    _storedCallback = callback;
 }
 
 
